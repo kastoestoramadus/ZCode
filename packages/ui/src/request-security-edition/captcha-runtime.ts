@@ -137,13 +137,13 @@ export async function runInteractiveCaptcha(
   signal: AbortSignal,
 ): Promise<string> {
   signal.throwIfAborted();
-  await loadCaptchaScript();
-  signal.throwIfAborted();
   // 3.16 行为：SDK 脚本按该全局选择接入点（region/prefix），加载与 init 前都要就位。
   window.AliyunRequestVerificationConfig = {
     region: config.region ?? "",
     prefix: config.prefix ?? "",
   };
+  await loadCaptchaScript();
+  signal.throwIfAborted();
   const host = ensureHost();
   let instance: AliyunCaptchaInstance | undefined;
   try {
