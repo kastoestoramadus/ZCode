@@ -138,10 +138,10 @@ export async function runInteractiveCaptcha(
 ): Promise<string> {
   signal.throwIfAborted();
   // 3.16 行为：SDK 脚本按该全局选择接入点（region/prefix），加载与 init 前都要就位。
-  window.AliyunRequestVerificationConfig = {
-    region: config.region ?? "",
-    prefix: config.prefix ?? "",
-  };
+  const endpoint = { region: config.region ?? "", prefix: config.prefix ?? "" };
+  window.AliyunRequestVerificationConfig = endpoint;
+  // The SDK reads its endpoint from window.AliyunCaptchaConfig (Aliyun captcha 2.0 docs); without it requests go to https://undefined.captcha-open.aliyuncs.com.
+  (window as unknown as { AliyunCaptchaConfig?: typeof endpoint }).AliyunCaptchaConfig = endpoint;
   await loadCaptchaScript();
   signal.throwIfAborted();
   const host = ensureHost();
