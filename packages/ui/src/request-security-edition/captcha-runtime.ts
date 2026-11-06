@@ -140,7 +140,7 @@ export async function runInteractiveCaptcha(
   // 3.16 行为：SDK 脚本按该全局选择接入点（region/prefix），加载与 init 前都要就位。
   const endpoint = { region: config.region ?? "", prefix: config.prefix ?? "" };
   window.AliyunRequestVerificationConfig = endpoint;
-  // The SDK reads its endpoint from window.AliyunCaptchaConfig (Aliyun captcha 2.0 docs); without it requests go to https://undefined.captcha-open.aliyuncs.com.
+  // 修复原因：SDK 从 window.AliyunCaptchaConfig 读取接入点（阿里云验证码 2.0 文档）；缺失时请求发往 https://undefined.captcha-open.aliyuncs.com 并报 Network Error。
   (window as unknown as { AliyunCaptchaConfig?: typeof endpoint }).AliyunCaptchaConfig = endpoint;
   await loadCaptchaScript();
   signal.throwIfAborted();
@@ -183,7 +183,7 @@ export async function runInteractiveCaptcha(
           },
           getInstance: (created) => {
             instance = created;
-            // Click only once the SDK has built its instance; a click before that is dropped and the claim spins until the timeout.
+            // 修复原因：SDK 交出实例后再触发弹窗；更早的程序化点击会被丢弃，领取一直转圈直到超时。
             setTimeout(openPopup, 0);
           },
         });
