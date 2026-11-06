@@ -162,6 +162,12 @@ export async function runInteractiveCaptcha(
         settle(() => reject(new CaptchaInteractiveRequiredError()));
       }, CAPTCHA_INTERACTIVE_TIMEOUT_MS);
       signal.addEventListener("abort", onAbort, { once: true });
+      const openPopup = () => {
+        if (settled) return;
+        const button = document.getElementById(CAPTCHA_BUTTON_ID);
+        if (button instanceof HTMLButtonElement) button.click();
+        else instance?.show?.();
+      };
       try {
         window.initAliyunCaptcha?.({
           SceneId: config.sceneId ?? "",
@@ -177,19 +183,14 @@ export async function runInteractiveCaptcha(
           },
           getInstance: (created) => {
             instance = created;
+            // Click only once the SDK has built its instance; a click before that is dropped and the claim spins until the timeout.
+            setTimeout(openPopup, 0);
           },
         });
       } catch (error) {
         settle(() => reject(error instanceof Error ? error : new Error(String(error))));
         return;
       }
-      // popup 模式由按钮触发：SDK 就绪后程序化点击（3.16 Nwt 兜底路径的同款做法）。
-      setTimeout(() => {
-        if (settled) return;
-        const button = document.getElementById(CAPTCHA_BUTTON_ID);
-        if (button instanceof HTMLButtonElement) button.click();
-        else instance?.show?.();
-      }, 0);
     });
   } finally {
     host.detach();
